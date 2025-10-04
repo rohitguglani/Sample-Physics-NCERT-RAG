@@ -1,0 +1,46 @@
+# Configuration template for the Physics Book RAG project.
+# Copy this file to configs/local.yaml and tweak the values to match your setup.
+
+paths:
+  raw_data: data/raw  # Where you drop the original PDF textbooks.
+  processed: data/processed  # Reserved for optional cleaned text (unused today).
+  vector_store: data/vector_store/index.faiss  # Saved FAISS index holding embeddings.
+  metadata_store: data/vector_store/metadata.jsonl  # Chunk metadata with source + page.
+  image_vector_store: data/vector_store/images.faiss  # Separate FAISS index for image embeddings.
+  image_metadata: data/vector_store/image_metadata.jsonl  # JSONL describing extracted figures.
+  images_dir: data/processed/images  # Folder where extracted images are saved.
+
+embedding:
+  model_name: sentence-transformers/all-MiniLM-L6-v2  # Compact sentence encoder that runs on CPU.
+  batch_size: 32  # Number of text chunks to embed at once; lower if RAM is tight.
+
+chunking:
+  target_tokens: 400  # Aim for ~400 word-pieces per chunk for a balance of detail + context.
+  overlap_tokens: 80  # Keep some overlap so important sentences are not cut in half.
+  min_chars: 200  # Skip tiny fragments that provide little context.
+
+retrieval:
+  top_k: 6  # Maximum number of chunks to send to the language model per question.
+  score_threshold: 0.3  # Filter out weak matches whose similarity score falls below this value.
+  image_top_k: 4  # Maximum number of images to surface alongside text.
+  image_score_threshold: 0.2  # Skip images with very low similarity to the question.
+
+images:
+  enabled: true  # Toggle image extraction + retrieval. Set false to skip heavy processing.
+  clip_model: sentence-transformers/clip-ViT-B-32  # Dual-encoder for matching text queries with images.
+  batch_size: 8  # Encode up to this many cropped images at once.
+  max_per_page: 6  # Safety cap to avoid dumping dozens of inline icons per page.
+  query_triggers: [figure, diagram, image, illustration, graph, chart]  # Words that hint the user wants figures.
+
+llm:
+  model: mistral:instruct  # Default Ollama model tag; change to whichever model you pulled.
+  base_url: http://127.0.0.1:11434  # Ollama server address (edit if you run it elsewhere).
+  context_window: 4096  # Max tokens the model can consider in one go (model-specific limit).
+  max_tokens: 512  # Cap on the length of each generated answer.
+  temperature: 0.1  # Lower = more deterministic answers; raise for creativity.
+  top_p: 0.95  # Top-p nucleus sampling control; keep high for factual responses.
+
+prompting:
+  system_prompt: |
+    You are a physics tutor. Answer with clear explanations and cite sources like [Book Title p.XX].
+    # The system prompt sets the tone and citation style for every response.

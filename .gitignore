@@ -1,0 +1,2 @@
+.venv/
+data/vector_store/ # optional but recommended for bulky indexes

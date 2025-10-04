@@ -1,0 +1,83 @@
+# Physics Book RAG
+
+Local Retrieval-Augmented Generation (RAG) chatbot for answering physics questions from a collection of textbook PDFs. The stack only uses open-source models served through Ollama, so you can run it without incurring API costs. The ingestion step now understands page layout, extracts figures, and builds a lightweight image index so you can ask for diagrams alongside text explanations.
+
+## Stack Overview
+- **Embedding model**: `sentence-transformers/all-MiniLM-L6-v2` (compact, CPU-friendly).
+- **Vector store**: FAISS (stored locally under `data/vector_store`). Text and image vectors live in separate indexes.
+- **LLM**: Any Ollama-hosted model (e.g. `mistral:instruct`) reachable at `http://127.0.0.1:11434`.
+- **PDF parsing**: PyMuPDF (`fitz`) for layout-aware text blocks and figure extraction.
+- **CLI experience**: Rich-powered terminal chat loop with citations.
+
+## Prerequisites
+1. Python 3.10 or newer.
+2. [Ollama](https://ollama.ai) installed and running locally (default host `http://127.0.0.1:11434`).
+3. Pull at least one permissive physics-friendly model, e.g. `ollama pull mistral:instruct`.
+4. Physics textbook PDFs placed in `data/raw/` before ingestion.
+5. Optional but recommended: ample disk space for extracted figures saved under `data/processed/images/`.
+
+## Installation
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install --upgrade pip
+pip install -e .
+```
+
+If FAISS installation fails on macOS with Apple Silicon, you can replace `faiss-cpu` with `faiss-cpu==1.7.4` or install via Conda. Ensure Ollama is running (`ollama serve`) before starting the chat loop.
+
+## Usage
+### 1. Configure
+Copy `configs/default.yaml` to `configs/local.yaml` and adjust values (model name, chunk size, etc.).
+
+### 2. Build the vector store
+```bash
+python -m physics_rag.ingest --config configs/local.yaml
+```
+This script extracts text and figures from every PDF in `data/raw`, chunks it, creates embeddings, and persists FAISS indexes plus metadata under `data/vector_store`.
+
+### 3. Chat with the bot
+```bash
+python -m physics_rag.chat --config configs/local.yaml
+```
+The CLI will load the FAISS index, query Ollama at the configured base URL, and let you ask multi-turn questions. Answers include inline citations pointing to the source page. Mention figures (e.g. “show me the diagram on…”), and the bot will also surface matching images saved on disk.
+
+### Optional: Streamlit web UI
+```bash
+streamlit run scripts/streamlit_app.py -- --config configs/local.yaml
+```
+This launches a browser-based chat experience that mirrors the CLI, displaying any retrieved figures inline. The double hyphen is required so Streamlit forwards the config flag to the app.
+
+## Project Layout
+```
+Physics Book RAG/
+├── configs/
+│   └── default.yaml
+├── data/
+│   ├── processed/
+│   │   └── images/
+│   ├── raw/
+│   └── vector_store/
+│       ├── image_metadata.jsonl
+│       ├── images.faiss
+│       ├── index.faiss
+│       └── metadata.jsonl
+├── models/
+├── scripts/
+├── src/
+│   └── physics_rag/
+│       ├── __init__.py
+│       ├── chat.py
+│       ├── config.py
+│       ├── ingestion.py
+│       ├── llm.py
+│       ├── retrieval.py
+│       └── utils.py
+└── pyproject.toml
+
+```
+
+## Next Steps
+- Add automated evaluation sets under `scripts/evals/` for regression testing.
+- Extend `chat.py` with a REST/Streamlit front-end if you prefer a GUI.
+- Experiment with quantized models to balance speed and accuracy on your hardware.

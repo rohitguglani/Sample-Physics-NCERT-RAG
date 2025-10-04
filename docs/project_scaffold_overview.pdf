@@ -1,0 +1,278 @@
+%PDF-1.4
+%‚„œ”
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>
+endobj
+4 0 obj
+<< /Length 7494 >>
+stream
+BT
+/F1 11 Tf
+72 760 Td
+14 TL
+(Physics Book RAG - Scaffold Documentation) Tj
+T*
+(Generated: 2025-10-04 14:38 UTC) Tj
+T*
+T*
+(This document explains every file and directory created for the zero-cost Physics Book RAG) Tj
+T*
+(project scaffold. Each section covers the file's role, the key contents it holds, and why) Tj
+T*
+(it was added to support a fully local retrieval-augmented generation workflow backed by) Tj
+T*
+(Ollama. The latest iteration also describes the multimodal and Streamlit additions that) Tj
+T*
+(extract textbook figures and expose a browser-based chat interface.) Tj
+T*
+T*
+(Directory: data/raw) Tj
+T*
+(  Purpose: Entry point for source textbooks. Place physics PDFs here before running) Tj
+T*
+(  ingestion so the pipeline can discover and process them without manual path tweaks.) Tj
+T*
+(  Rationale: Ensures a dedicated location for unprocessed materials and keeps the) Tj
+T*
+(  repository tidy.) Tj
+T*
+T*
+(Directory: data/processed) Tj
+T*
+(  Purpose: Reserved for intermediate artifacts such as cleaned text caches. Currently) Tj
+T*
+(  unused by default but ready for future preprocessing enhancements.) Tj
+T*
+(  Rationale: Creating this upfront avoids reshuffling the structure when you introduce) Tj
+T*
+(  text cleaning stages.) Tj
+T*
+T*
+(Directory: data/processed/images) Tj
+T*
+(  Purpose: Holds PNG snapshots of figures extracted from each textbook page \(one subfolder) Tj
+T*
+(  per PDF\).) Tj
+T*
+(  Rationale: Lets the retrieval layer link to diagrams and charts when the user asks for) Tj
+T*
+(  visual references.) Tj
+T*
+T*
+(Directory: data/vector_store) Tj
+T*
+(  Purpose: Stores FAISS indexes and JSONL metadata for both text and image embeddings.) Tj
+T*
+(  Rationale: Centralizes retrieval assets so they can be versioned, backed up, or) Tj
+T*
+(  regenerated easily.) Tj
+T*
+T*
+(Directory: models) Tj
+T*
+(  Purpose: Optional parking spot for exported models or experiment assets. Not required) Tj
+T*
+(  when using Ollama, but available if you later store quantized files for other runtimes.) Tj
+T*
+(  Rationale: Keeps large inference artifacts out of the source tree should you choose to) Tj
+T*
+(  add them.) Tj
+T*
+T*
+(Directory: scripts) Tj
+T*
+(  Purpose: Placeholder for helper scripts such as evaluation or maintenance utilities. Now) Tj
+T*
+(  also houses the Streamlit web app entry point.) Tj
+T*
+(  Rationale: Encourages automation and keeps ad-hoc tooling out of the main package) Tj
+T*
+(  namespace.) Tj
+T*
+T*
+(File: scripts/streamlit_app.py) Tj
+T*
+(  Purpose: Streamlit interface that mirrors the CLI experience, displaying retrieved) Tj
+T*
+(  figures inline and persisting chat history per browser session.) Tj
+T*
+(  Rationale: Provides a point-and-click option for teammates who prefer a graphical) Tj
+T*
+(  interface over terminals.) Tj
+T*
+T*
+(Directory: configs) Tj
+T*
+(  Purpose: Configuration files \(YAML\) live here. The default template documents tunable) Tj
+T*
+(  knobs for paths, chunking, retrieval, image support, and Ollama runtime settings.) Tj
+T*
+(  Rationale: Bundles environment-specific values in one place so you can maintain multiple) Tj
+T*
+(  profiles.) Tj
+T*
+T*
+(File: pyproject.toml) Tj
+T*
+(  Purpose: Defines the project as an editable Python package, pins core dependencies) Tj
+T*
+(  \(FAISS, SentenceTransformers, PyMuPDF, Pillow, Streamlit\) and configures dev tooling) Tj
+T*
+(  \(black, ruff, mypy, pytest\).) Tj
+T*
+(  Rationale: Needed for reproducible installations, editable development, and out-of-the-) Tj
+T*
+(  box linting.) Tj
+T*
+T*
+(File: README.md) Tj
+T*
+(  Purpose: High-level overview detailing the fully local stack, Ollama setup instructions,) Tj
+T*
+(  figure-aware ingestion, Streamlit launch instructions, and future work suggestions.) Tj
+T*
+(  Rationale: Provides onboarding documentation so newcomers understand how to operate the) Tj
+T*
+(  scaffold.) Tj
+T*
+T*
+(File: configs/default.yaml) Tj
+T*
+(  Purpose: Default configuration consumed by both ingestion and chat modules. Captures) Tj
+T*
+(  directory paths, chunking targets, retrieval thresholds, Ollama base URL and model name,) Tj
+T*
+(  image index settings, and the tutoring system prompt.) Tj
+T*
+(  Rationale: Serves as a template for user-specific overrides \(copy to configs/local.yaml\)) Tj
+T*
+(  and documents all adjustable parameters in one canonical place.) Tj
+T*
+T*
+(Package: src/physics_rag/__init__.py) Tj
+T*
+(  Purpose: Initializes the Python package and exposes primary modules for downstream) Tj
+T*
+(  imports.) Tj
+T*
+(  Rationale: Allows python -m physics_rag.<module> execution and clean namespace exports.) Tj
+T*
+T*
+(Module: src/physics_rag/config.py) Tj
+T*
+(  Purpose: Loads YAML settings into dataclasses, trims the Ollama base URL, validates path) Tj
+T*
+(  structure, and eagerly creates expected directories \(including the image output tree\).) Tj
+T*
+(  Rationale: Centralizes configuration handling so every script shares the same validated) Tj
+T*
+(  settings.) Tj
+T*
+T*
+(Module: src/physics_rag/utils.py) Tj
+T*
+(  Purpose: Utility helpers for text normalization, layout-aware chunking via PyMuPDF,) Tj
+T*
+(  deterministic chunk identifiers, and image extraction.) Tj
+T*
+(  Rationale: Encapsulates reusable ingestion logic, keeping the main pipeline readable and) Tj
+T*
+(  testable.) Tj
+T*
+T*
+(Module: src/physics_rag/ingestion.py) Tj
+T*
+(  Purpose: Command-line ingestion entry point. Splits each PDF into chunks, captures) Tj
+T*
+(  nearby figures, encodes embeddings with SentenceTransformer/CLIP, and writes FAISS) Tj
+T*
+(  indexes alongside metadata.) Tj
+T*
+(  Rationale: Turns raw textbooks into a multimodal knowledge base without relying on paid) Tj
+T*
+(  services.) Tj
+T*
+T*
+(Module: src/physics_rag/retrieval.py) Tj
+T*
+(  Purpose: Loads the FAISS indexes and metadata, embeds user queries, and returns scored) Tj
+T*
+(  context chunks plus optional figure hits ready for prompting.) Tj
+T*
+(  Rationale: Abstracts vector-store interactions so chat, Streamlit, and future services) Tj
+T*
+(  can reuse retrieval logic.) Tj
+T*
+T*
+(Module: src/physics_rag/llm.py) Tj
+T*
+(  Purpose: HTTP client for Ollama. Formats text passages and figure references into a) Tj
+T*
+(  single prompt, forwards chat messages to the local Ollama server, and applies generation) Tj
+T*
+(  options such as temperature and top_p.) Tj
+T*
+(  Rationale: Keeps model-specific code isolated, making it easy to swap Ollama models or) Tj
+T*
+(  tweak generation options.) Tj
+T*
+T*
+(Module: src/physics_rag/chat.py) Tj
+T*
+(  Purpose: Interactive Rich-powered CLI loop. Accepts questions, fetches supporting) Tj
+T*
+(  passages and figures, queries the local Ollama-backed LLM, and displays answers with) Tj
+T*
+(  citations plus retrieval scores.) Tj
+T*
+(  Rationale: Provides an immediately usable interface to validate ingestion quality and) Tj
+T*
+(  iterate on prompts.) Tj
+T*
+T*
+(Directory: docs) Tj
+T*
+(  Purpose: Destination for human-readable documentation artifacts. Stores this PDF for) Tj
+T*
+(  quick reference.) Tj
+T*
+(  Rationale: Keeps explanatory materials separate from executable code, aiding) Tj
+T*
+(  distribution and sharing.) Tj
+T*
+T*
+(With these components in place, you can ingest multiple physics textbooks, build text and) Tj
+T*
+(image vector indexes, and converse with the materials using Ollama-hosted language models.) Tj
+T*
+(Customize the YAML config to point at your preferred model name, adjust chunking or) Tj
+T*
+(retrieval settings, and run either the CLI or Streamlit chat loop once the FAISS indexes) Tj
+T*
+(are generated.) Tj
+T*
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000015 00000 n 
+0000000064 00000 n 
+0000000121 00000 n 
+0000000247 00000 n 
+0000007793 00000 n 
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+7863
+%%EOF

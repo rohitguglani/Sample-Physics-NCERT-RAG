@@ -1,0 +1,50 @@
+# Project metadata for packaging/installing the code.
+[build-system]
+requires = ["setuptools>=61.0"]  # Minimal build tooling so `pip install -e .` works.
+build-backend = "setuptools.build_meta"  # Use setuptools' modern build backend.
+
+[project]
+name = "physics-book-rag"  # Package name shown by pip.
+version = "0.1.0"  # Bump when you release new versions.
+description = "Local RAG chatbot for physics textbooks"  # Short human-readable summary.
+readme = "README.md"  # Long-form description displayed on package indexes.
+requires-python = ">=3.10"  # Guard rail: refuse to install on older Python versions.
+dependencies = [
+    "faiss-cpu",  # Vector database library that stores embeddings locally.
+    "numpy",  # Core numerical array library required by FAISS and embeddings.
+    "pydantic>=2.5",  # Validation helpers if you later add API models or configs.
+    "pyyaml",  # Reads the YAML config files (e.g., configs/default.yaml).
+    "python-dotenv",  # Allows optional .env overrides; kept for flexibility.
+    "sentence-transformers",  # Embedding models used to turn text into vectors.
+    "requests",  # Simple HTTP client for talking to the local Ollama server.
+    "rich",  # Pretty terminal output for progress messages and chat UI.
+    "tqdm",  # Progress bars (currently unused but handy for long ingests).
+    "PyMuPDF",  # Layout-aware PDF parser (a.k.a. fitz) used to read text + images.
+    "Pillow",  # Image utilities for saving figures extracted from textbooks.
+    "streamlit"  # Optional web UI for chatting in the browser.
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",  # Testing framework for future unit tests.
+    "black",  # Opinionated code formatter.
+    "ruff",  # Fast linter for catching style and bug risks.
+    "mypy"  # Static type checker to spot type mismatches early.
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]  # Tell setuptools where to look for the `physics_rag` package.
+
+[tool.black]
+target-version = ["py310"]  # Align formatter with our minimum Python version.
+line-length = 100  # Relaxed line length so comments stay readable.
+
+[tool.ruff]
+target-version = "py310"  # Keep linter expectations in sync with runtime version.
+line-length = 100
+select = ["E", "F", "I", "B", "UP"]  # Enable common rule sets (errors, bugs, etc.).
+
+[tool.pytest.ini_options]
+minversion = "7.0"  # Warn if someone tries to run tests with an older pytest.
+addopts = "-ra"  # Show extra info on skipped/xfail tests.
+pythonpath = ["src"]  # Ensure tests can import the package without installing it.
