@@ -1,2 +1,7 @@
 .venv/
-data/vector_store/ # optional but recommended for bulky indexes
+__pycache__/
+*.pyc
+
+# Generated artifacts from ingestion
+data/vector_store/
+data/processed/

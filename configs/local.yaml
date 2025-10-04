@@ -3,16 +3,38 @@ paths:
   processed: data/processed
   vector_store: data/vector_store/index.faiss
   metadata_store: data/vector_store/metadata.jsonl
+  image_vector_store: data/vector_store/images.faiss
+  image_metadata: data/vector_store/image_metadata.jsonl
+  images_dir: data/processed/images
+
 embedding:
   model_name: sentence-transformers/all-MiniLM-L6-v2
   batch_size: 32
+
 chunking:
   target_tokens: 400
   overlap_tokens: 80
   min_chars: 200
+
 retrieval:
   top_k: 6
   score_threshold: 0.3
+  image_top_k: 4
+  image_score_threshold: 0.2
+
+images:
+  enabled: true
+  clip_model: sentence-transformers/clip-ViT-B-32
+  batch_size: 8
+  max_per_page: 6
+  query_triggers:
+    - figure
+    - diagram
+    - image
+    - illustration
+    - graph
+    - chart
+
 llm:
   model: mistral:instruct
   base_url: http://127.0.0.1:11434
@@ -20,6 +42,7 @@ llm:
   max_tokens: 512
   temperature: 0.1
   top_p: 0.95
+
 prompting:
   system_prompt: |
     You are a physics tutor. Answer with clear explanations and cite sources like [Book Title p.XX].

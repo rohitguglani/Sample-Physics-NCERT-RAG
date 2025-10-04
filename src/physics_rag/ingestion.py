@@ -162,7 +162,7 @@ def ingest(config_path: str | Path) -> None:
                 pil_images.append(img.convert("RGB"))
 
         image_vectors = image_model.encode(
-            images=pil_images,
+            pil_images,
             batch_size=settings.images.batch_size,
             show_progress_bar=True,
             normalize_embeddings=True,

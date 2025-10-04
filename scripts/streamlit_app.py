@@ -40,7 +40,12 @@ def render_images(images: Iterable[RetrievedImage]) -> None:
     for idx, image in enumerate(images, start=1):
         caption = image.caption or "Extracted figure"
         st.write(f"<fig {idx}> {image.source} p.{image.page} (score {image.score:.3f})")
-        st.image(image.image_path, caption=caption, use_column_width=True)
+        st.image(
+            image.image_path,
+            caption=caption,
+            use_column_width=True,
+            output_format="PNG",
+        )
 
 
 def main() -> None:

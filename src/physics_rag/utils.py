@@ -10,10 +10,12 @@ from __future__ import annotations
 
 import hashlib
 import re
+from io import BytesIO
 from pathlib import Path
 from typing import Iterator, List, Tuple
 
 import fitz  # type: ignore[import-not-found]
+from PIL import Image, UnidentifiedImageError
 
 
 def normalize_text(text: str) -> str:
@@ -93,6 +95,7 @@ def extract_pdf_content(
     for page_index, page in enumerate(doc, start=1):
         page_blocks = page.get_text("dict").get("blocks", [])
         images_on_page = 0
+        seen_xrefs: set[int] = set()
 
         for block in page_blocks:
             block_type = block.get("type")
@@ -121,37 +124,44 @@ def extract_pdf_content(
             elif block_type == 1 and max_images_per_page > 0:  # Image block
                 if images_on_page >= max_images_per_page:
                     continue
-                xref = block.get("image")
+                xref = block.get("xref")
                 if xref is None:
                     continue
 
-                try:
-                    pix = fitz.Pixmap(doc, xref)
-                except RuntimeError:
-                    continue  # Skip embedded formats PyMuPDF cannot decode.
+                if _save_extracted_image(
+                    doc,
+                    xref,
+                    image_subdir,
+                    pdf_path,
+                    page_index,
+                    images_on_page,
+                    image_records,
+                    block_bbox=block.get("bbox"),
+                ):
+                    images_on_page += 1
+                    seen_xrefs.add(int(xref))
 
-                if pix.n >= 5:  # Convert CMYK and similar to RGB.
-                    pix = fitz.Pixmap(fitz.csRGB, pix)
+        # Fallback: PyMuPDF sometimes lists figures only via get_images, so add leftovers.
+        if max_images_per_page > 0 and images_on_page < max_images_per_page:
+            for image in page.get_images(full=True):
+                if images_on_page >= max_images_per_page:
+                    break
+                xref = image[0]
+                if xref in seen_xrefs:
+                    continue
+                if _save_extracted_image(
+                    doc,
+                    xref,
+                    image_subdir,
+                    pdf_path,
+                    page_index,
+                    images_on_page,
+                    image_records,
+                ):
+                    images_on_page += 1
+                    seen_xrefs.add(int(xref))
 
-                image_name = f"{pdf_path.stem}_p{page_index:03d}_img{images_on_page+1:02d}.png"
-                image_path = image_subdir / image_name
-                ensure_parent(image_path)
-                pix.save(str(image_path))
-                images_on_page += 1
-
-                image_records.append(
-                    {
-                        "page": page_index,
-                        "image_path": image_path,
-                        "source": pdf_path.name,
-                        "chunk_id": hash_text(
-                            f"{pdf_path.name}:{page_index}:image:{xref}"
-                        )[:12],
-                        "bbox": block.get("bbox"),
-                        "caption": f"Figure captured from page {page_index} of {pdf_path.name}",
-                    }
-                )
-
+    doc.close()
     return text_chunks, image_records
 
 
@@ -175,3 +185,50 @@ def _flatten_block_text(block: dict) -> str:
             parts.append(span.get("text", ""))
         parts.append("\n")
     return normalize_text(" ".join(parts))
+
+
+def _save_extracted_image(
+    doc: fitz.Document,
+    xref: int,
+    image_subdir: Path,
+    pdf_path: Path,
+    page_index: int,
+    images_on_page: int,
+    image_records: List[dict[str, object]],
+    block_bbox: tuple[float, float, float, float] | None = None,
+) -> bool:
+    try:
+        image_info = doc.extract_image(xref)
+    except RuntimeError:
+        return False
+
+    image_bytes = image_info.get("image")
+    if not image_bytes:
+        return False
+
+    try:
+        pil_image = Image.open(BytesIO(image_bytes))
+    except UnidentifiedImageError:
+        return False
+
+    # Convert to RGB to avoid issues with CMYK/alpha when saving.
+    if pil_image.mode not in {"RGB", "L"}:
+        pil_image = pil_image.convert("RGB")
+
+    image_name = f"{pdf_path.stem}_p{page_index:03d}_img{images_on_page+1:02d}.png"
+    image_path = image_subdir / image_name
+    ensure_parent(image_path)
+    pil_image.save(image_path, format="PNG")
+    pil_image.close()
+
+    image_records.append(
+        {
+            "page": page_index,
+            "image_path": image_path,
+            "source": pdf_path.name,
+            "chunk_id": hash_text(f"{pdf_path.name}:{page_index}:image:{xref}")[:12],
+            "bbox": block_bbox,
+            "caption": f"Figure captured from page {page_index} of {pdf_path.name}",
+        }
+    )
+    return True
